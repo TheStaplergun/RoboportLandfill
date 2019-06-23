@@ -3,6 +3,10 @@ local Interface = require('__stdlib__/stdlib/scripts/interface')
 
 --500
 --20x25
+local tick_options = {
+    skip_valid = true,
+    protected_mode = false
+}
 
 local function get_lr(wt)
     local ulx = wt.ul_pos_x
@@ -47,7 +51,7 @@ local function place_ghosts(event)
         }
         if x_iterations > 1 then
             global.placing_ghosts = true
-            remote.call("PickerAtheneum","queue_add","RoboticLandfill","tile_tick_handler")
+            remote.call('PickerAtheneum', 'event_queue_add', 'on_roboport_place', nil, tick_options)
             global.tile_queue = global.tile_queue or {}
             global.tile_queue[#global.tile_queue + 1] = wt
         end
@@ -91,10 +95,12 @@ local function tile_tick_handler()
     if global.placing_ghosts then
         tile_ghost_placer()
     else
-        remote.call("PickerAtheneum","queue_remove","RoboticLandfill","tile_tick_handler")
+        remote.call('PickerAtheneum', 'event_queue_remove', 'on_roboport_place', nil, tick_options)
     end
 end
 
-Interface['tile_tick_handler'] = function()
-    tile_tick_handler()
+local function on_init_and_load()
+    local build_tiles = Event.set_event_name('on_roboport_place', remote.call('PickerAtheneum', 'generate_event_name', 'on_roboport_place'))
+    Event.register(build_tiles, tile_tick_handler, nil, nil, tick_options)
 end
+Event.on_event({Event.core_events.on_init, Event.core_events.on_load}, on_init_and_load)
