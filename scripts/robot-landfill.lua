@@ -82,7 +82,9 @@ local function tile_ghost_placer()
         end
         local tile_set = get_tiles(wt)
         for i,tiles in pairs(tile_set) do
-            surface.create_entity({name = "tile-ghost", inner_name = "landfill", position = tiles.position, expires = false, force = wt.force})
+            if tiles.name ~= "out-of-map" and not surface.find_entity("tile-ghost", tiles.position) then
+                surface.create_entity({name = "tile-ghost", inner_name = "landfill", position = tiles.position, expires = false, force = wt.force})
+            end
         end
         wt.current_x = wt.current_x + 1
         wt.ul_pos_x = wt.ul_pos_x + 15
