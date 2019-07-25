@@ -1,5 +1,7 @@
 local Event = require('__stdlib__/stdlib/event/event')
 local Interface = require('__stdlib__/stdlib/scripts/interface')
+local Position = require('__stdlib__/stdlib/area/position')
+local Player = require('__stdlib__/stdlib/event/player')
 
 --500
 --20x25
@@ -27,8 +29,12 @@ end
 
 local function place_ghosts(event)
     local entity = event.created_entity
+    local player = Player.get(event.player_index)
+    if not player.is_shortcut_toggled('roboport-landfill-toggle-on-off') then
+        return
+    end
     if entity.type == "roboport" then
-        local radius = entity.prototype.construction_radius
+        local radius = player.is_shortcut_toggled('roboport-landfill-toggle-radius') and entity.prototype.construction_radius or entity.prototype.logistic_radius
         local epos = entity.position
         local surface = entity.surface
         local x_iterations = radius > 7.5 and math.floor((2*radius)/15) or 1
@@ -82,7 +88,7 @@ local function tile_ghost_placer()
         end
         local tile_set = get_tiles(wt)
         for i,tiles in pairs(tile_set) do
-            if tiles.name ~= "out-of-map" and not surface.find_entity("tile-ghost", tiles.position) then
+            if tiles.name ~= "out-of-map" and not surface.find_entity("tile-ghost", Position.add(tiles.position, {0.5,0.5})) then
                 surface.create_entity({name = "tile-ghost", inner_name = "landfill", position = tiles.position, expires = false, force = wt.force})
             end
         end
@@ -100,6 +106,22 @@ local function tile_tick_handler()
         remote.call('PickerAtheneum', 'event_queue_remove', 'on_roboport_place', nil, tick_options)
     end
 end
+
+local function on_lua_shortcut(event)
+    if event.prototype_name == 'roboport-landfill-toggle-radius' then
+        local player = Player.get(event.player_index)
+        if player.is_shortcut_available('roboport-landfill-toggle-radius') then
+            player.set_shortcut_toggled('roboport-landfill-toggle-radius', not player.is_shortcut_toggled('roboport-landfill-toggle-radius'))
+        end
+    end
+    if event.prototype_name == 'roboport-landfill-toggle-on-off' then
+        local player = Player.get(event.player_index)
+        if player.is_shortcut_available('roboport-landfill-toggle-on-off') then
+            player.set_shortcut_toggled('roboport-landfill-toggle-on-off', not player.is_shortcut_toggled('roboport-landfill-toggle-on-off'))
+        end
+    end
+end
+Event.register(defines.events.on_lua_shortcut, on_lua_shortcut)
 
 local function on_init_and_load()
     local build_tiles = Event.set_event_name('on_roboport_place', remote.call('PickerAtheneum', 'generate_event_name', 'on_roboport_place'))
