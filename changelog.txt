@@ -1,6 +1,9 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.17.2
 Date: 24. 7. 2019
+  Features:
+    - Add shortcut to toggle on/off
+    - Add shortcut to toggle logistic/construction radius
   Fixes:
     - Overlapping tile ghosts
     - Doesn't place in "out-of-map"
